@@ -142,6 +142,11 @@ def jouer_casino(
     # Formula: ΔV = (U_burn / κ) × efficiency × η_global
     # κ regulates liquidity: higher κ → more V created
     # η_global modulates V creation based on global productivity
+    #
+    # TODO: Introduce explicit S (effort) in value creation
+    # Future formula: ΔV = f(U, S) × η_global
+    # where both monetary input (U) and effort (S) contribute to value
+    # For now, we implicitly assume all value creation comes from U combustion
     V_genere = (prix_entree / kappa) * 0.8 * eta_global  # 80% efficiency × η
 
     entreprise.wallet_V += V_genere
@@ -203,6 +208,11 @@ def investir_nft_entreprise(
 
     # Convert to V with η_global modulation
     # Formula: V = U / κ × η_global
+    #
+    # TODO: Introduce explicit S (effort) in value creation
+    # Future formula: ΔV = f(U, S) × η_global
+    # Investment should combine monetary capital (U) with entrepreneurial effort (S)
+    # For now, we implicitly assume all value creation comes from U conversion
     V_injecte = (montant_U / kappa) * eta_global
 
     entreprise.wallet_V += V_injecte

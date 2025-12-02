@@ -84,7 +84,7 @@ class Exchange:
             rad: RAD instance
             cycle_data: Previous cycle data with keys:
                 - U_burn_total: U burned in cycle
-                - S_burn_total: S burned in cycle (simplified: ~= U_burn)
+                - S_burn_total: S (effort) burned in cycle
                 - V_ON_prev: V_ON from previous cycle
 
         Returns:
@@ -101,8 +101,10 @@ class Exchange:
         r_ic = (D_TAP + D_stack) / V_ON if V_ON > 0 else 0
 
         # Sensor 2: Effective circulation velocity
+        # nu_eff = (U_burn + S_burn) / V_ON_prev
+        # Combines monetary spending (U) with effort expenditure (S)
         U_burn = cycle_data.get('U_burn_total', 0)
-        S_burn = cycle_data.get('S_burn_total', U_burn)  # Simplified: S ≈ U
+        S_burn = cycle_data.get('S_burn_total', U_burn)  # Fallback to U if S not available
         V_ON_prev = cycle_data.get('V_ON_prev', V_ON)
         nu_eff = (U_burn + S_burn) / V_ON_prev if V_ON_prev > 0 else 0.2
 

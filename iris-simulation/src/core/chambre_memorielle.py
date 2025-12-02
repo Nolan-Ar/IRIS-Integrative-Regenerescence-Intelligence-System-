@@ -55,6 +55,10 @@ class ChambreMemorielle:
         - Monthly cost: (good_value_V × κ) / duration
         - Total: Paid in U over the duration
 
+        If no goods in stock, a virtual 4-5★ good is created with a high value,
+        simulating an initial "enterprise" that provides high-end patrimony.
+        This ensures tau_eng > 0 and allows staking dynamics to exist.
+
         Args:
             agent: Agent requesting staking
             budget: Monthly budget available (in U)
@@ -65,13 +69,29 @@ class ChambreMemorielle:
         Returns:
             True if contract created, False otherwise
         """
+        # If stock is empty, create a virtual 4-5★ good
+        # This simulates an initial enterprise providing high-value goods
+        # ensuring staking is always possible (tau_eng > 0)
         if not self.stock_biens:
-            return False
+            from .bien import Bien
+            import random
 
-        # Choose affordable good
-        bien = self._choisir_bien_adapte(budget, kappa)
-        if not bien:
-            return False
+            # Randomly choose between 4★ and 5★
+            etoiles = random.choice([4, 5])
+            valeur_base = self._estimer_valeur_bien_5_etoiles(etoiles)
+
+            bien = Bien(
+                id=str(uuid.uuid4()),
+                etoiles=etoiles,
+                valeur_V=valeur_base,
+                type='patrimonial',
+                actif=True
+            )
+        else:
+            # Choose affordable good from stock
+            bien = self._choisir_bien_adapte(budget, kappa)
+            if not bien:
+                return False
 
         # Calculate contract terms
         duree = 12 * bien.etoiles  # 48 cycles for 4★, 60 for 5★
@@ -95,8 +115,9 @@ class ChambreMemorielle:
             cycles_payes=0
         )
 
-        # Remove good from stock
-        self.stock_biens.remove(bien)
+        # Remove good from stock (only if it was in stock, not a virtual good)
+        if bien in self.stock_biens:
+            self.stock_biens.remove(bien)
 
         # Add to active contracts
         self.contrats_actifs.append(contrat)
@@ -193,6 +214,28 @@ class ChambreMemorielle:
                 return bien
 
         return None
+
+    def _estimer_valeur_bien_5_etoiles(self, etoiles: int = 5) -> float:
+        """
+        Estimate the value_V of a virtual 4-5★ good
+
+        These virtual goods are expensive compared to the economy,
+        simulating an initial specialized enterprise providing high-end patrimony.
+
+        Args:
+            etoiles: Star level (4 or 5)
+
+        Returns:
+            Estimated valeur_V for the virtual good
+
+        TODO: Refine this calculation based on actual economy metrics
+        """
+        # Simple implementation: fixed high values
+        # These ensure monthly costs are significant but not impossible
+        if etoiles == 4:
+            return 2000.0  # ~41.67 U/month over 48 cycles at κ=1
+        else:  # 5 stars
+            return 5000.0  # ~83.33 U/month over 60 cycles at κ=1
 
     def get_statistics(self) -> dict:
         """
