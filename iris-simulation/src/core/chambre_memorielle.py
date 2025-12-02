@@ -111,7 +111,7 @@ class ChambreMemorielle:
 
         return True
 
-    def finaliser_contrats(self, cycle: int, rad: 'RAD') -> List['ContratStaking']:
+    def finaliser_contrats(self, cycle: int, rad: 'RAD') -> tuple[List['ContratStaking'], float]:
         """
         Process active contracts:
         - Collect monthly payments
@@ -123,9 +123,10 @@ class ChambreMemorielle:
             rad: RAD instance
 
         Returns:
-            List of completed contracts
+            Tuple of (list of completed contracts, total U collected in payments)
         """
         contrats_termines = []
+        U_collected = 0.0
 
         for contrat in self.contrats_actifs[:]:  # Copy to allow modification
             # Skip if agent is dead
@@ -148,6 +149,7 @@ class ChambreMemorielle:
                 if contrat.agent.wallet_U >= contrat.cout_mensuel:
                     contrat.agent.wallet_U -= contrat.cout_mensuel
                     contrat.cycles_payes += 1
+                    U_collected += contrat.cout_mensuel
                 else:
                     # Cannot pay - contract defaults (simplified: ignore for now)
                     pass
@@ -167,7 +169,7 @@ class ChambreMemorielle:
             if contrat in self.contrats_actifs:
                 self.contrats_actifs.remove(contrat)
 
-        return contrats_termines
+        return contrats_termines, U_collected
 
     def _choisir_bien_adapte(self, budget: float, kappa: float) -> Optional['Bien']:
         """

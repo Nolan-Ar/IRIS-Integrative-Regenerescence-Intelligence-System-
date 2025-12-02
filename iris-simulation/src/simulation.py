@@ -53,7 +53,9 @@ class Simulation:
         self.cycle_data = {
             'V_ON_prev': 0,
             'U_burn_total': 0,
-            'S_burn_total': 0
+            'S_burn_total': 0,
+            'RU_total': 0,
+            'U_stake_flow': 0
         }
 
     def run(self) -> None:
@@ -138,19 +140,21 @@ class Simulation:
 
         # 3. Distribute Universal Income
         RU_total = self.universe.distribute_RU(
-            self.agents, cycle_num, V_ON, self.rad
+            self.agents, cycle_num, V_ON, self.rad, eta_global
         )
 
         # 4. Agent actions
         U_burn_total = 0
+        U_stake_flow = 0
         for agent in self.agents:
             if agent.alive:
-                U_spent = decide_agent_actions(
+                spending = decide_agent_actions(
                     agent, cycle_num, self.entreprises,
                     self.chambre_memorielle, kappa,
-                    self.catalogue_biens, self.rad
+                    self.catalogue_biens, self.rad, eta_global
                 )
-                U_burn_total += U_spent
+                U_burn_total += spending['total']
+                U_stake_flow += spending['staking']
 
         # 5. Enterprise management
         V_salaries_total = 0
@@ -163,8 +167,9 @@ class Simulation:
                 V_salaries_total += V_sal
                 V_burned_total += V_burn
 
-        # 6. Finalize staking contracts
-        self.chambre_memorielle.finaliser_contrats(cycle_num, self.rad)
+        # 6. Finalize staking contracts (collect monthly payments)
+        _, U_staking_payments = self.chambre_memorielle.finaliser_contrats(cycle_num, self.rad)
+        U_stake_flow += U_staking_payments
 
         # 7. Burn unused U (perishability)
         for agent in self.agents:
@@ -202,7 +207,9 @@ class Simulation:
         self.cycle_data = {
             'V_ON_prev': V_ON,
             'U_burn_total': U_burn_total,
-            'S_burn_total': U_burn_total  # Simplified: S ≈ U
+            'S_burn_total': U_burn_total,  # Simplified: S ≈ U
+            'RU_total': RU_total,
+            'U_stake_flow': U_stake_flow
         }
 
     def _gerer_demographie(self, cycle: int) -> tuple[int, int]:
@@ -229,12 +236,20 @@ class Simulation:
                     else:
                         self.chambre_relance.recycler_bien(bien, self.rad)
 
-                # Add patrimony to RAD as regulator debt
-                patrimoine_total = agent.wallet_V + sum(
+                # Add net patrimony to RAD as regulator debt
+                # Net = V - D (to avoid double counting existing debt)
+                patrimoine_V = agent.wallet_V + sum(
                     b.valeur_V for b in agent.biens
                 )
-                if patrimoine_total > 0:
-                    self.rad.add_debt(patrimoine_total, secteur='regulateur')
+                # Calculate agent's outstanding debt (from staking contracts)
+                dette_agent = sum(
+                    c.montant_total for c in agent.contrats_staking
+                )
+                patrimoine_net = patrimoine_V - dette_agent
+
+                # Only add positive net patrimony (V > D)
+                if patrimoine_net > 0:
+                    self.rad.add_debt(patrimoine_net, secteur='regulateur')
 
         # Process births (slightly higher than deaths for growth)
         taux_mortalite = len(deces) / len([a for a in self.agents if a.alive]) if self.agents else 0
