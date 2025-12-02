@@ -4,56 +4,56 @@ IRIS SIMULATION - STATISTICAL ANALYSIS REPORT
 
 SIMULATION SUMMARY
 --------------------------------------------------------------------------------
-  total_cycles: 24
-  total_years: 2
-  final_cycle: 23
+  total_cycles: 960
+  total_years: 80
+  final_cycle: 959
 
 THERMODYNAMIC CONVERGENCE (D/V → 1)
 --------------------------------------------------------------------------------
-  adf_statistic: 0.4645961548591773
-  p_value: 0.9837563593890102
-  critical_values: {'1%': -3.769732625845229, '5%': -3.005425537190083, '10%': -2.6425009917355373}
+  adf_statistic: 0.10518039798732004
+  p_value: 0.9664130092534985
+  critical_values: {'1%': -3.4373332444652944, '5%': -2.864622912101569, '10%': -2.568411524473161}
   stationary: False
-  last_12_mean: 0.9654334842311266
-  converges_to_1: True
-  interpretation: CONVERGED: D/V ratio is stable around 1.0
+  last_12_mean: 2.098152560261155
+  converges_to_1: False
+  interpretation: DIVERGENT: D/V ratio has not converged to 1.0
 
 INEQUALITY EVOLUTION
 --------------------------------------------------------------------------------
-  gini_initial: 0.6
-  gini_final: 0.6
-  delta_gini: 0.0
+  gini_initial: 0.6006630769353418
+  gini_final: 0.7627895513726829
+  delta_gini: 0.16212647443734107
   trend: increasing
-  trend_slope: 0.0
-  trend_r_squared: nan
-  interpretation: Gini increased by 0.0000 (0.00%)
+  trend_slope: 0.0002753452587696203
+  trend_r_squared: 0.8641446066063414
+  interpretation: Gini increased by 0.1621 (26.99%)
 
 REGULATION EFFICIENCY (κ and η)
 --------------------------------------------------------------------------------
 Kappa (κ):
-  mean: 1.8812499999999999
-  std: 0.24751482169058436
-  range: (1.15, 2.0)
-  extreme_adjustments: 18
-  correlation_with_D_V: -0.855727389270813
+  mean: 1.7708787131098072
+  std: 0.45237154892189363
+  range: (0.5, 2.0)
+  extreme_adjustments: 783
+  correlation_with_D_V: -0.16509754660086093
 
 Eta (η):
-  mean: 1.8811309699415
-  std: 0.24765602880902235
-  range: (1.15, 2.0)
-  extreme_adjustments: 18
-  correlation_with_velocity: 0.6133244023893217
+  mean: 1.5661880116222544
+  std: 0.6687078383732347
+  range: (0.5, 2.0)
+  extreme_adjustments: 924
+  correlation_with_velocity: -0.4193849264444231
 
-κ oscillates around 1.881 (±0.248), η oscillates around 1.881 (±0.248). Regulation is volatile.
+κ oscillates around 1.771 (±0.452), η oscillates around 1.566 (±0.669). Regulation is volatile.
 
 DEMOGRAPHIC RESILIENCE
 --------------------------------------------------------------------------------
-  population_start: 100
-  population_end: 100
+  population_start: 1000
+  population_end: 1000
   population_growth: 0.0
   population_volatility: 0.0
-  total_births: 0
-  total_deaths: 0
+  total_births: 887
+  total_deaths: 887
   net_migration: 0
   interpretation: Population declined by 0.00% over simulation. Demographic volatility: 0.0000
 
