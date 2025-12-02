@@ -62,20 +62,22 @@ class Universe:
         agents: List['Agent'],
         cycle: int,
         V_ON: float,
-        rad: 'RAD'
+        rad: 'RAD',
+        eta_global: float = 1.0
     ) -> float:
         """
         Distribute Universal Income to all living agents
 
-        Each agent receives: RU_individual = RU_base × η_agent
+        Each agent receives: RU_individual = RU_base × η_agent × η_global
 
-        This modulates RU based on individual productivity coefficient
+        This modulates RU based on both individual and global productivity
 
         Args:
             agents: List of all agents
             cycle: Current cycle number
             V_ON: Total active Verum
             rad: RAD instance for debt calculation
+            eta_global: Global productivity coefficient from Exchange
 
         Returns:
             Total RU distributed
@@ -94,8 +96,8 @@ class Universe:
         # Distribute to each living agent
         total_distribue = 0
         for agent in living_agents:
-            # Individual RU modulated by η
-            RU_agent = RU_base * agent.eta
+            # Individual RU modulated by η_agent AND η_global
+            RU_agent = RU_base * agent.eta * eta_global
             agent.wallet_U += RU_agent
             total_distribue += RU_agent
 

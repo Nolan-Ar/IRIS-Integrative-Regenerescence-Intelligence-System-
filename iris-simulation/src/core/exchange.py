@@ -106,10 +106,12 @@ class Exchange:
         V_ON_prev = cycle_data.get('V_ON_prev', V_ON)
         nu_eff = (U_burn + S_burn) / V_ON_prev if V_ON_prev > 0 else 0.2
 
-        # Sensor 3: Engagement rate
-        U_staked = D_stack  # Simplified: staked U
-        U_total = sum(a.wallet_U for a in agents if a.alive)
-        tau_eng = U_staked / U_total if U_total > 0 else 0
+        # Sensor 3: Engagement rate (flow-based)
+        # tau_eng = U spent on staking / RU distributed
+        # Uses previous cycle's flow data
+        RU_total = cycle_data.get('RU_total', 0)
+        U_stake_flow = cycle_data.get('U_stake_flow', 0)
+        tau_eng = U_stake_flow / RU_total if RU_total > 0 else 0
 
         return r_ic, nu_eff, tau_eng
 

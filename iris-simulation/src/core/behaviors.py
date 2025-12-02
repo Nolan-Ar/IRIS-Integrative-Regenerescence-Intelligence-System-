@@ -21,8 +21,9 @@ def decide_agent_actions(
     chambre_memorielle: 'ChambreMemorielle',
     kappa: float,
     catalogue_biens: List['Bien'],
-    rad: 'RAD'
-) -> float:
+    rad: 'RAD',
+    eta_global: float = 1.0
+) -> dict:
     """
     Agent decides economic actions based on 5 aptitudes
 
@@ -40,14 +41,22 @@ def decide_agent_actions(
         kappa: Current κ coefficient
         catalogue_biens: Goods catalog
         rad: RAD instance
+        eta_global: Global productivity coefficient
 
     Returns:
-        Total U spent by agent
+        Dict with spending breakdown: {
+            'total': Total U spent,
+            'staking': U spent on staking,
+            'investment': U spent on NFT investment,
+            'consumption': U spent on casino
+        }
     """
     if not agent.alive:
-        return 0
+        return {'total': 0, 'staking': 0, 'investment': 0, 'consumption': 0}
 
-    U_spent = 0
+    U_staking = 0
+    U_investment = 0
+    U_consumption = 0
     RU_disponible = agent.wallet_U
 
     # 1. STAKING (social_up > 60)
@@ -60,7 +69,7 @@ def decide_agent_actions(
             # Calculer le montant réellement prélevé
             U_apres = agent.wallet_U
             montant_preleve = U_avant - U_apres
-            U_spent += montant_preleve
+            U_staking += montant_preleve
             RU_disponible -= montant_preleve
 
     # 2. INVESTMENT NFT (épargne > 50)
@@ -69,9 +78,9 @@ def decide_agent_actions(
         entreprise_cible = choisir_meilleure_entreprise(entreprises)
         if entreprise_cible:
             U_invested = investir_nft_entreprise(
-                agent, entreprise_cible, budget_invest, kappa, cycle
+                agent, entreprise_cible, budget_invest, kappa, cycle, eta_global
             )
-            U_spent += U_invested
+            U_investment += U_invested
             RU_disponible -= U_invested
 
     # 3. CONSUMPTION (conso > 40)
@@ -80,12 +89,17 @@ def decide_agent_actions(
         entreprise_cible = choisir_entreprise_ponderee(entreprises)
         if entreprise_cible:
             U_consumed = jouer_casino(
-                agent, entreprise_cible, budget_conso, kappa, catalogue_biens
+                agent, entreprise_cible, budget_conso, kappa, catalogue_biens, eta_global
             )
-            U_spent += U_consumed
+            U_consumption += U_consumed
             RU_disponible -= U_consumed
 
-    return U_spent
+    return {
+        'total': U_staking + U_investment + U_consumption,
+        'staking': U_staking,
+        'investment': U_investment,
+        'consumption': U_consumption
+    }
 
 
 def jouer_casino(
@@ -93,7 +107,8 @@ def jouer_casino(
     entreprise: 'Entreprise',
     budget_U: float,
     kappa: float,
-    catalogue_biens: List['Bien']
+    catalogue_biens: List['Bien'],
+    eta_global: float = 1.0
 ) -> float:
     """
     Agent plays enterprise casino to acquire 1-3★ goods
@@ -113,8 +128,9 @@ def jouer_casino(
     Returns:
         Amount of U spent
     """
-    # Entry price depends on enterprise level and κ
-    prix_entree = entreprise.niveau * 10 * kappa
+    # Entry price is fixed based on enterprise level (in U)
+    # Price does NOT include kappa - kappa affects V generation separately
+    prix_entree = entreprise.niveau * 10.0
 
     if agent.wallet_U < prix_entree:
         return 0
@@ -123,8 +139,10 @@ def jouer_casino(
     agent.wallet_U -= prix_entree
 
     # Conversion U→V (simplified Stipulat)
-    # Formula: ΔV = U_burn / κ × efficiency
-    V_genere = (prix_entree / kappa) * 0.8  # 80% efficiency
+    # Formula: ΔV = (U_burn / κ) × efficiency × η_global
+    # κ regulates liquidity: higher κ → more V created
+    # η_global modulates V creation based on global productivity
+    V_genere = (prix_entree / kappa) * 0.8 * eta_global  # 80% efficiency × η
 
     entreprise.wallet_V += V_genere
     entreprise.historique_participants += 1
@@ -156,7 +174,8 @@ def investir_nft_entreprise(
     entreprise: 'Entreprise',
     montant_U: float,
     kappa: float,
-    cycle: int
+    cycle: int,
+    eta_global: float = 1.0
 ) -> float:
     """
     Agent invests in enterprise via financial NFT
@@ -182,8 +201,9 @@ def investir_nft_entreprise(
     # Payment
     agent.wallet_U -= montant_U
 
-    # Convert to V
-    V_injecte = montant_U / kappa
+    # Convert to V with η_global modulation
+    # Formula: V = U / κ × η_global
+    V_injecte = (montant_U / kappa) * eta_global
 
     entreprise.wallet_V += V_injecte
 
