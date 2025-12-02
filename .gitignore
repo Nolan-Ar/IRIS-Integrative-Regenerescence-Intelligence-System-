@@ -24,3 +24,9 @@ iris-simulation/src/data/
 # OS
 .DS_Store
 Thumbs.db
+
+# Test configurations
+iris-simulation/test_config.yaml
+
+# Simulation logs
+iris-simulation/*.log

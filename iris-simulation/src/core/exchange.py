@@ -104,7 +104,10 @@ class Exchange:
         # nu_eff = (U_burn + S_burn) / V_ON_prev
         # Combines monetary spending (U) with effort expenditure (S)
         U_burn = cycle_data.get('U_burn_total', 0)
-        S_burn = cycle_data.get('S_burn_total', U_burn)  # Fallback to U if S not available
+        # S_burn_total is now calculated explicitly in Simulation per agent
+        # with different weights for staking/investment/consumption
+        # Fallback to U_burn only for backward compatibility if S absent
+        S_burn = cycle_data.get('S_burn_total', U_burn)
         V_ON_prev = cycle_data.get('V_ON_prev', V_ON)
         nu_eff = (U_burn + S_burn) / V_ON_prev if V_ON_prev > 0 else 0.2
 

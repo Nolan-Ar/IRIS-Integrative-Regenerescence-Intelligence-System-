@@ -1,0 +1,36 @@
+# IRIS Economic Simulation - 960 cycles (80 years) configuration
+
+simulation:
+  agents: 4069
+  v_total: 23530
+  cycles: 960  # 80 years
+  entreprises_ratio: 0.3
+  distribution: 'pareto_80_20'
+  seed: 42
+
+regulation:
+  kappa_base: 1.0
+  eta_base: 1.0
+  alpha_eta: 0.3
+  beta_eta: 0.4
+  gamma_eta: 0.2
+  alpha_kappa: 0.4
+  beta_kappa: 0.3
+  gamma_kappa: 0.2
+  nu_target: 0.20
+  tau_target: 0.35
+
+demographie:
+  age_min: 18
+  age_max: 65
+  facteur_croissance: 1.01
+
+staking:
+  duree_4_etoiles: 48
+  duree_5_etoiles: 60
+
+output:
+  save_agents_initial: true
+  save_agents_final: true
+  generate_plots: true
+  verbose: false

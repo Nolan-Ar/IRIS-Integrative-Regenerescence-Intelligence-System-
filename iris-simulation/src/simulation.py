@@ -144,8 +144,9 @@ class Simulation:
         )
 
         # 4. Agent actions
-        U_burn_total = 0
-        U_stake_flow = 0
+        U_burn_total = 0.0
+        U_stake_flow = 0.0
+        S_burn_total = 0.0
         for agent in self.agents:
             if agent.alive:
                 spending = decide_agent_actions(
@@ -155,6 +156,9 @@ class Simulation:
                 )
                 U_burn_total += spending['total']
                 U_stake_flow += spending['staking']
+
+                # Effort S explicite pour cet agent
+                S_burn_total += self._calculer_effort_S_agent(agent, spending)
 
         # 5. Enterprise management
         V_salaries_total = 0
@@ -203,10 +207,8 @@ class Simulation:
                 tau_eng=tau_eng
             )
 
-        # Calculate effort S for this cycle
-        S_burn_total = self._calculer_effort_S(self.agents, U_burn_total)
-
         # Update cycle data for next iteration
+        # S_burn_total was calculated during agent actions loop
         self.cycle_data = {
             'V_ON_prev': V_ON,
             'U_burn_total': U_burn_total,
@@ -277,49 +279,60 @@ class Simulation:
 
         return len(deces), len(nouveaux_agents)
 
-    def _calculer_effort_S(self, agents: List[Agent], U_burn_total: float) -> float:
+    def _calculer_effort_S_agent(self, agent: Agent, spending: dict) -> float:
         """
-        Calculate S_burn_total (effort burned) for this cycle
+        Calculate effort S for a single agent this cycle
 
-        Approach: S is proportional to U_burn_total, weighted by the average
-        agent aptitudes ('croissance' and 'social_up') which represent
-        individual capacity for effort and social engagement.
+        Approach:
+        - Effort is proportional to U spent by the agent
+        - Weighted by agent aptitudes 'croissance' and 'social_up'
+        - Different spending types have different effort weights:
+          * staking (long-term commitment): 1.2×
+          * investment (entrepreneurial effort): 1.0×
+          * consumption (immediate satisfaction): 0.6×
 
-        This simple model makes S comparable in magnitude to U but modulated
-        by agent characteristics, preparing for future ΔV = η × Δt × E where
-        E combines both U and S.
+        This distinguishes monetary spending (U) from actual effort (S),
+        preparing for thermodynamic model where ΔV = η × f(U, S)
 
         Args:
-            agents: List of all agents
-            U_burn_total: Total U burned this cycle
+            agent: Agent whose effort to calculate
+            spending: Dictionary with keys 'staking', 'investment', 'consumption', 'total'
 
         Returns:
-            Total effort S burned this cycle
+            Total effort S burned by this agent
 
-        TODO: Refine towards a proper effort model where S represents
-        actual work/time investment distinct from monetary spending
+        TODO: Refine weights based on empirical simulation results
         """
-        vivants = [a for a in agents if a.alive]
-        if not vivants:
+        if not agent.alive:
             return 0.0
 
-        # Calculate average effort capacity from aptitudes
-        # 'croissance' (growth) and 'social_up' (upward social mobility)
-        # represent agent drive and capability for productive effort
-        scores = []
-        for agent in vivants:
-            # Normalize to [0,1] scale (aptitudes are 0-100, sum to 100)
-            effort_capacity = (
-                agent.aptitudes['croissance'] + agent.aptitudes['social_up']
-            ) / 200.0
-            scores.append(effort_capacity)
+        # Normalize aptitudes to [0, 1]
+        croissance = agent.aptitudes['croissance'] / 100.0
+        social_up = agent.aptitudes['social_up'] / 100.0
 
-        # Average effort capacity across population
-        facteur_effort = sum(scores) / len(scores) if scores else 0.5
+        # Agent effort factor: higher 'croissance' and 'social_up' mean
+        # more of their U spending translates to actual effort
+        # Range: [0.5, 1.0]
+        facteur_agent = 0.5 + 0.5 * (croissance + social_up) / 2.0
 
-        # S_burn proportional to U_burn, modulated by effort capacity
-        # Base multiplier 0.5 ensures S ~ U in magnitude
-        return U_burn_total * (0.5 + facteur_effort)
+        # Extract spending by type
+        U_staking = spending.get('staking', 0.0)
+        U_invest = spending.get('investment', 0.0)
+        U_conso = spending.get('consumption', 0.0)
+
+        # Effort weights by spending type
+        poids_staking = 1.2   # Long-term commitment requires more effort
+        poids_invest = 1.0    # Entrepreneurial investment is baseline effort
+        poids_conso = 0.6     # Consumption requires less effort
+
+        # Calculate effort by type
+        S_staking = U_staking * poids_staking
+        S_invest = U_invest * poids_invest
+        S_conso = U_conso * poids_conso
+
+        # Total agent effort modulated by aptitudes
+        S_total_agent = (S_staking + S_invest + S_conso) * facteur_agent
+        return S_total_agent
 
     def _print_status(self, cycle: int) -> None:
         """Print current simulation status"""

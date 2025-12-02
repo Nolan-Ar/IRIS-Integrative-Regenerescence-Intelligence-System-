@@ -139,15 +139,22 @@ def jouer_casino(
     agent.wallet_U -= prix_entree
 
     # Conversion U→V (simplified Stipulat)
-    # Formula: ΔV = (U_burn / κ) × efficiency × η_global
+    # Formula: ΔV = (U_burn / κ) × efficiency × η_global × facteur_effort
     # κ regulates liquidity: higher κ → more V created
     # η_global modulates V creation based on global productivity
     #
-    # TODO: Introduce explicit S (effort) in value creation
-    # Future formula: ΔV = f(U, S) × η_global
-    # where both monetary input (U) and effort (S) contribute to value
-    # For now, we implicitly assume all value creation comes from U combustion
-    V_genere = (prix_entree / kappa) * 0.8 * eta_global  # 80% efficiency × η
+    # ΔV now integrates an effort factor based on agent aptitudes
+    # This brings the simulation closer to the thermodynamic relation:
+    #   ΔV = η × f(U, S)
+    # where S (effort) is derived from aptitudes and U spending
+
+    # Effort factor based on agent aptitudes
+    # Higher 'croissance' and 'social_up' mean more efficient U→V conversion
+    croissance = agent.aptitudes['croissance'] / 100.0
+    social_up = agent.aptitudes['social_up'] / 100.0
+    facteur_effort = 0.5 + 0.5 * (croissance + social_up) / 2.0  # Range: [0.5, 1.0]
+
+    V_genere = (prix_entree / kappa) * 0.8 * eta_global * facteur_effort
 
     entreprise.wallet_V += V_genere
     entreprise.historique_participants += 1
@@ -206,14 +213,21 @@ def investir_nft_entreprise(
     # Payment
     agent.wallet_U -= montant_U
 
-    # Convert to V with η_global modulation
-    # Formula: V = U / κ × η_global
+    # Convert to V with η_global modulation and effort factor
+    # Formula: V = U / κ × η_global × facteur_effort
     #
-    # TODO: Introduce explicit S (effort) in value creation
-    # Future formula: ΔV = f(U, S) × η_global
-    # Investment should combine monetary capital (U) with entrepreneurial effort (S)
-    # For now, we implicitly assume all value creation comes from U conversion
-    V_injecte = (montant_U / kappa) * eta_global
+    # ΔV now integrates an effort factor based on agent aptitudes
+    # This brings the simulation closer to the thermodynamic relation:
+    #   ΔV = η × f(U, S)
+    # Investment combines monetary capital (U) with entrepreneurial effort (S)
+
+    # Effort factor based on agent aptitudes
+    # Higher 'croissance' and 'social_up' mean more entrepreneurial capacity
+    croissance = agent.aptitudes['croissance'] / 100.0
+    social_up = agent.aptitudes['social_up'] / 100.0
+    facteur_effort = 0.5 + 0.5 * (croissance + social_up) / 2.0  # Range: [0.5, 1.0]
+
+    V_injecte = (montant_U / kappa) * eta_global * facteur_effort
 
     entreprise.wallet_V += V_injecte
 
