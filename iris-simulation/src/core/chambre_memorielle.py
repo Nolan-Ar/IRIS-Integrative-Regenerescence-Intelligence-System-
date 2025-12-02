@@ -139,8 +139,12 @@ class ChambreMemorielle:
                 rad.add_debt(-contrat.montant_total, secteur='engagement')
                 continue
 
-            # Collect monthly payment
-            if cycle > contrat.cycle_debut:
+            # Le premier paiement (cycles_payes=1) a déjà été fait dans proposer_staking()
+            # On calcule combien de cycles se sont écoulés depuis le début
+            cycles_depuis_debut = cycle - contrat.cycle_debut
+
+            # Si on doit faire un paiement ce cycle (pas le premier)
+            if cycles_depuis_debut > 0 and cycles_depuis_debut == contrat.cycles_payes:
                 if contrat.agent.wallet_U >= contrat.cout_mensuel:
                     contrat.agent.wallet_U -= contrat.cout_mensuel
                     contrat.cycles_payes += 1

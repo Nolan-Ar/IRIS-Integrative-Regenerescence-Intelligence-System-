@@ -53,9 +53,15 @@ def decide_agent_actions(
     # 1. STAKING (social_up > 60)
     if agent.aptitudes['social_up'] > 60 and RU_disponible > 0:
         budget_staking = RU_disponible * (agent.aptitudes['social_up'] / 100) * 0.4
+        U_avant = agent.wallet_U
+
+        # proposer_staking() prélève automatiquement le premier paiement mensuel
         if chambre_memorielle.proposer_staking(agent, budget_staking, cycle, kappa, rad):
-            U_spent += budget_staking
-            RU_disponible -= budget_staking
+            # Calculer le montant réellement prélevé
+            U_apres = agent.wallet_U
+            montant_preleve = U_avant - U_apres
+            U_spent += montant_preleve
+            RU_disponible -= montant_preleve
 
     # 2. INVESTMENT NFT (épargne > 50)
     if agent.aptitudes['épargne'] > 50 and RU_disponible > 0:
@@ -276,18 +282,23 @@ def gerer_entreprise(
     if cycle % frequence_campagne == 0:
         lancer_campagne_nft(entreprise, agents)
 
-    # Distribute V
-    if entreprise.wallet_V <= 0:
+    # Distribute V (with reserve)
+    V_minimum_reserve = 50  # Minimum reserve to maintain operations
+
+    if entreprise.wallet_V <= V_minimum_reserve:
         return 0, 0
 
-    V_salaires = entreprise.wallet_V * 0.4
-    V_brule = entreprise.wallet_V * 0.6
+    # Only distribute 80% of available V, keep 20% as reserve
+    V_distribuable = (entreprise.wallet_V - V_minimum_reserve) * 0.8
+
+    V_salaires = V_distribuable * 0.4
+    V_brule = V_distribuable * 0.6
 
     # Pay salaries to random agents
     distribuer_salaires_aleatoires(V_salaires, agents)
 
-    # Burn rest (B2B simulation)
-    entreprise.wallet_V = 0  # All V consumed
+    # Update wallet: subtract distributed amount
+    entreprise.wallet_V -= V_distribuable
 
     return V_salaires, V_brule
 
