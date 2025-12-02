@@ -1,0 +1,70 @@
+# IRIS Economic Simulation - Configuration File
+
+simulation:
+  # Number of initial agents
+  agents: 4069
+
+  # Total Verum to distribute initially
+  v_total: 23530
+
+  # Number of simulation cycles (1 cycle = 1 month)
+  cycles: 120
+
+  # Proportion of agents with enterprises
+  entreprises_ratio: 0.3
+
+  # Initial wealth distribution
+  # Options: 'pareto_80_20', 'equal'
+  distribution: 'pareto_80_20'
+
+  # Random seed for reproducibility (null = random)
+  seed: null
+
+# Regulation parameters (Layer 1 - Couche 1)
+regulation:
+  # Base coefficients
+  kappa_base: 1.0
+  eta_base: 1.0
+
+  # Adjustment coefficients for η
+  alpha_eta: 0.3   # Weight for thermometer (1 - r)
+  beta_eta: 0.4    # Weight for velocity deviation
+  gamma_eta: 0.2   # Weight for engagement deviation
+
+  # Adjustment coefficients for κ
+  alpha_kappa: 0.4  # Weight for velocity deviation
+  beta_kappa: 0.3   # Weight for engagement deviation
+  gamma_kappa: 0.2  # Weight for thermometer (1 - r)
+
+  # Target values
+  nu_target: 0.20   # Target circulation velocity (20%)
+  tau_target: 0.35  # Target engagement rate (35%)
+
+# Demographics
+demographie:
+  # Age range
+  age_min: 18
+  age_max: 65
+
+  # Population growth factor
+  facteur_croissance: 1.01  # +1% growth
+
+# Staking configuration
+staking:
+  # Duration in cycles (months)
+  duree_4_etoiles: 48  # 4 years for 4★ goods
+  duree_5_etoiles: 60  # 5 years for 5★ goods
+
+# Output configuration
+output:
+  # Save initial agent state
+  save_agents_initial: true
+
+  # Save final agent state
+  save_agents_final: true
+
+  # Generate plots
+  generate_plots: true
+
+  # Verbose logging
+  verbose: false

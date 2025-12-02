@@ -1,0 +1,62 @@
+================================================================================
+IRIS SIMULATION - STATISTICAL ANALYSIS REPORT
+================================================================================
+
+SIMULATION SUMMARY
+--------------------------------------------------------------------------------
+  total_cycles: 12
+  total_years: 1
+  final_cycle: 11
+
+THERMODYNAMIC CONVERGENCE (D/V → 1)
+--------------------------------------------------------------------------------
+  adf_statistic: 2.0059578242994465
+  p_value: 0.9986806429083804
+  critical_values: {'1%': -4.9386902332361515, '5%': -3.477582857142857, '10%': -2.8438679591836733}
+  stationary: False
+  last_12_mean: 0.9892804552462705
+  converges_to_1: True
+  interpretation: CONVERGED: D/V ratio is stable around 1.0
+
+INEQUALITY EVOLUTION
+--------------------------------------------------------------------------------
+  gini_initial: 0.5989665366530444
+  gini_final: 0.5989665366530444
+  delta_gini: 0.0
+  trend: increasing
+  trend_slope: -0.00021587700633626399
+  trend_r_squared: 0.9910195043021897
+  interpretation: Gini increased by 0.0000 (0.00%)
+
+REGULATION EFFICIENCY (κ and η)
+--------------------------------------------------------------------------------
+Kappa (κ):
+  mean: 1.7625
+  std: 0.31197683480435767
+  range: (1.15, 2.0)
+  extreme_adjustments: 6
+  correlation_with_D_V: -0.7841290080675728
+
+Eta (η):
+  mean: 1.7613300704035026
+  std: 0.31248249755406693
+  range: (1.15, 2.0)
+  extreme_adjustments: 6
+  correlation_with_velocity: 0.6108245079042509
+
+κ oscillates around 1.762 (±0.312), η oscillates around 1.761 (±0.312). Regulation is volatile.
+
+DEMOGRAPHIC RESILIENCE
+--------------------------------------------------------------------------------
+  population_start: 100
+  population_end: 100
+  population_growth: 0.0
+  population_volatility: 0.0
+  total_births: 0
+  total_deaths: 0
+  net_migration: 0
+  interpretation: Population declined by 0.00% over simulation. Demographic volatility: 0.0000
+
+================================================================================
+END OF REPORT
+================================================================================
