@@ -1,0 +1,62 @@
+================================================================================
+IRIS SIMULATION - STATISTICAL ANALYSIS REPORT
+================================================================================
+
+SIMULATION SUMMARY
+--------------------------------------------------------------------------------
+  total_cycles: 60
+  total_years: 5
+  final_cycle: 59
+
+THERMODYNAMIC CONVERGENCE (D/V → 1)
+--------------------------------------------------------------------------------
+  adf_statistic: -1.1743953598721792
+  p_value: 0.6845120810707116
+  critical_values: {'1%': -3.5552728880540942, '5%': -2.9157312396694217, '10%': -2.5956695041322315}
+  stationary: False
+  last_12_mean: 0.950785900753312
+  converges_to_1: True
+  interpretation: CONVERGED: D/V ratio is stable around 1.0
+
+INEQUALITY EVOLUTION
+--------------------------------------------------------------------------------
+  gini_initial: 0.60038123548678
+  gini_final: 0.5970758033537301
+  delta_gini: -0.0033054321330499015
+  trend: decreasing
+  trend_slope: -6.618207371116368e-05
+  trend_r_squared: 0.8937749552019276
+  interpretation: Gini decreased by 0.0033 (0.55%)
+
+REGULATION EFFICIENCY (κ and η)
+--------------------------------------------------------------------------------
+Kappa (κ):
+  mean: 1.9525000000000001
+  std: 0.1653001891782732
+  range: (1.15, 2.0)
+  extreme_adjustments: 54
+  correlation_with_D_V: -0.05068243496538148
+
+Eta (η):
+  mean: 1.9524412039721122
+  std: 0.16541764611639143
+  range: (1.15, 2.0)
+  extreme_adjustments: 54
+  correlation_with_velocity: 0.6316154131235785
+
+κ oscillates around 1.953 (±0.165), η oscillates around 1.952 (±0.165). Regulation is stable.
+
+DEMOGRAPHIC RESILIENCE
+--------------------------------------------------------------------------------
+  population_start: 500
+  population_end: 500
+  population_growth: 0.0
+  population_volatility: 0.0
+  total_births: 3
+  total_deaths: 3
+  net_migration: 0
+  interpretation: Population declined by 0.00% over simulation. Demographic volatility: 0.0000
+
+================================================================================
+END OF REPORT
+================================================================================
