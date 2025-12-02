@@ -127,6 +127,14 @@ class Simulation:
         # 1. Calculate V_ON
         V_ON = self.exchange.calculer_V_ON(self.agents, self.entreprises)
 
+        # 1b. Automatic debt stabilizer when D/V > 1.5
+        # Reinforces amortization to prevent debt explosion
+        r = self.rad.get_ratio(V_ON)
+        if r > 1.5:
+            # Reduce 10% of excess debt (D - V)
+            montant = (self.rad.get_total() - V_ON) * 0.1
+            self.rad.add_debt(-montant, secteur="regulateur")
+
         # 2. Calculate sensors and regulate κ, η
         r_ic, nu_eff, tau_eng = self.exchange.calculer_capteurs(
             self.agents, self.entreprises, self.rad, self.cycle_data

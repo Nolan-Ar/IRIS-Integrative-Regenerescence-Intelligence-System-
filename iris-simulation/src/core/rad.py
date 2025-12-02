@@ -26,8 +26,9 @@ class RAD:
     D_engagement: float = 0.0     # Staking engagements
     D_regulateur: float = 0.0     # Relance chamber
 
-    # Amortization rate (monthly decay ~0.1041666%)
-    delta_m: float = 0.001041666
+    # Amortization rate (monthly decay 1%)
+    # Increased from 0.001041666 to 0.01 to stabilize D/V ratio
+    delta_m: float = 0.01
 
     def add_debt(self, amount: float, secteur: str) -> None:
         """

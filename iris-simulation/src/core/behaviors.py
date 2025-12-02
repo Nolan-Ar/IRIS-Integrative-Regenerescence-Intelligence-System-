@@ -150,9 +150,10 @@ def jouer_casino(
 
     # Effort factor based on agent aptitudes
     # Higher 'croissance' and 'social_up' mean more efficient U→V conversion
+    # Adjusted from [0.5, 1.0] to [0.8, 1.2] to reduce penalty on V creation
     croissance = agent.aptitudes['croissance'] / 100.0
     social_up = agent.aptitudes['social_up'] / 100.0
-    facteur_effort = 0.5 + 0.5 * (croissance + social_up) / 2.0  # Range: [0.5, 1.0]
+    facteur_effort = 0.8 + 0.4 * (croissance + social_up) / 2.0  # Range: [0.8, 1.2]
 
     V_genere = (prix_entree / kappa) * 0.8 * eta_global * facteur_effort
 
@@ -223,9 +224,10 @@ def investir_nft_entreprise(
 
     # Effort factor based on agent aptitudes
     # Higher 'croissance' and 'social_up' mean more entrepreneurial capacity
+    # Adjusted from [0.5, 1.0] to [0.8, 1.2] to reduce penalty on V creation
     croissance = agent.aptitudes['croissance'] / 100.0
     social_up = agent.aptitudes['social_up'] / 100.0
-    facteur_effort = 0.5 + 0.5 * (croissance + social_up) / 2.0  # Range: [0.5, 1.0]
+    facteur_effort = 0.8 + 0.4 * (croissance + social_up) / 2.0  # Range: [0.8, 1.2]
 
     V_injecte = (montant_U / kappa) * eta_global * facteur_effort
 
