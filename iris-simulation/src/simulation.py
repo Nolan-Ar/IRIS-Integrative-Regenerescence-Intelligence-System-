@@ -203,11 +203,14 @@ class Simulation:
                 tau_eng=tau_eng
             )
 
+        # Calculate effort S for this cycle
+        S_burn_total = self._calculer_effort_S(self.agents, U_burn_total)
+
         # Update cycle data for next iteration
         self.cycle_data = {
             'V_ON_prev': V_ON,
             'U_burn_total': U_burn_total,
-            'S_burn_total': U_burn_total,  # Simplified: S ≈ U
+            'S_burn_total': S_burn_total,  # Explicit effort calculation
             'RU_total': RU_total,
             'U_stake_flow': U_stake_flow
         }
@@ -273,6 +276,50 @@ class Simulation:
                 self.entreprises.append(agent.entreprise)
 
         return len(deces), len(nouveaux_agents)
+
+    def _calculer_effort_S(self, agents: List[Agent], U_burn_total: float) -> float:
+        """
+        Calculate S_burn_total (effort burned) for this cycle
+
+        Approach: S is proportional to U_burn_total, weighted by the average
+        agent aptitudes ('croissance' and 'social_up') which represent
+        individual capacity for effort and social engagement.
+
+        This simple model makes S comparable in magnitude to U but modulated
+        by agent characteristics, preparing for future ΔV = η × Δt × E where
+        E combines both U and S.
+
+        Args:
+            agents: List of all agents
+            U_burn_total: Total U burned this cycle
+
+        Returns:
+            Total effort S burned this cycle
+
+        TODO: Refine towards a proper effort model where S represents
+        actual work/time investment distinct from monetary spending
+        """
+        vivants = [a for a in agents if a.alive]
+        if not vivants:
+            return 0.0
+
+        # Calculate average effort capacity from aptitudes
+        # 'croissance' (growth) and 'social_up' (upward social mobility)
+        # represent agent drive and capability for productive effort
+        scores = []
+        for agent in vivants:
+            # Normalize to [0,1] scale (aptitudes are 0-100, sum to 100)
+            effort_capacity = (
+                agent.aptitudes['croissance'] + agent.aptitudes['social_up']
+            ) / 200.0
+            scores.append(effort_capacity)
+
+        # Average effort capacity across population
+        facteur_effort = sum(scores) / len(scores) if scores else 0.5
+
+        # S_burn proportional to U_burn, modulated by effort capacity
+        # Base multiplier 0.5 ensures S ~ U in magnitude
+        return U_burn_total * (0.5 + facteur_effort)
 
     def _print_status(self, cycle: int) -> None:
         """Print current simulation status"""

@@ -97,6 +97,12 @@ class Universe:
         total_distribue = 0
         for agent in living_agents:
             # Individual RU modulated by η_agent AND η_global
+            # RU represents available "power" that agents can spend or invest
+            #
+            # TODO: Link RU distribution to S (effort) dynamics
+            # RU could represent both monetary power (U) and effort capacity (S)
+            # For now, we only distribute U; S is not explicitly consumed/regenerated
+            # but is calculated based on agent aptitudes and U spending
             RU_agent = RU_base * agent.eta * eta_global
             agent.wallet_U += RU_agent
             total_distribue += RU_agent
