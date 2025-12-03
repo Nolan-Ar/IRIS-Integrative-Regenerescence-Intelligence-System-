@@ -30,3 +30,4 @@ iris-simulation/test_config.yaml
 
 # Simulation logs
 iris-simulation/*.log
+*.log

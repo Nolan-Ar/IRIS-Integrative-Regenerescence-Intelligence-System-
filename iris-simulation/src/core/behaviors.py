@@ -3,8 +3,9 @@ IRIS Simulation - Agent Behaviors
 Implements economic decision-making for agents and enterprises
 """
 
-import random
 import math
+import random
+import uuid
 from typing import List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -235,7 +236,6 @@ def investir_nft_entreprise(
 
     # Create NFT financier
     from .agent import NFTFinancier
-    import uuid
 
     nft = NFTFinancier(
         id=str(uuid.uuid4()),

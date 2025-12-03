@@ -3,9 +3,10 @@ IRIS Simulation - Goods (Biens) Module
 Implements NFT goods with star ratings (1-5 stars)
 """
 
+import random
+import uuid
 from dataclasses import dataclass
 from typing import Literal
-import uuid
 
 
 @dataclass
@@ -105,8 +106,6 @@ def creer_bien_aleatoire(etoiles: int, catalogue: list[Bien]) -> Bien:
     Returns:
         New Bien instance (copy from catalog)
     """
-    import random
-
     # Filter catalog by star level
     biens_disponibles = [b for b in catalogue if b.etoiles == etoiles]
 
