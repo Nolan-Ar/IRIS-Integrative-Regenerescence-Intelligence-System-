@@ -26,11 +26,11 @@ class RAD:
     D_engagement: float = 0.0     # Staking engagements
     D_regulateur: float = 0.0     # Relance chamber
 
-    # Amortization rate (monthly decay 0.5%)
-    # Adjusted from 0.01 to 0.005 for optimal D/V equilibrium
-    # 0.001 was too weak (D/V → 2.14), 0.01 too strong (D/V → 0.36)
-    # 0.005 should achieve thermodynamic equilibrium D/V → 1.0
-    delta_m: float = 0.005
+    # Amortization rate (monthly decay ~0.104%)
+    # Protocol specifies ~80-year memory horizon
+    # Formula: δ_m ≈ 1 / (80 years × 12 months) = 0.00104166
+    # Previous values: 0.01 (7-year horizon, too fast), 0.005 (17-year horizon, still too fast)
+    delta_m: float = 0.00104166
 
     def add_debt(self, amount: float, secteur: str) -> None:
         """
