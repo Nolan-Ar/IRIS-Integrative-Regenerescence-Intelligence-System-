@@ -43,13 +43,13 @@ class Exchange:
         self.beta_kappa: float = 0.3      # Weight for engagement
         self.gamma_kappa: float = 0.2     # Weight for thermometer
 
-        # Bounds (widened to avoid saturation)
-        # Previous: [0.5, 2.0] → New: [0.3, 3.0]
-        self.eta_min: float = 0.3
-        self.eta_max: float = 3.0
-        self.kappa_min: float = 0.3
-        self.kappa_max: float = 3.0
-        self.delta_max: float = 0.15      # Max change per cycle
+        # Bounds from protocol (section 3.3.3)
+        # Both κ and η constrained to [0.5, 2.0]
+        self.eta_min: float = 0.5
+        self.eta_max: float = 2.0
+        self.kappa_min: float = 0.5
+        self.kappa_max: float = 2.0
+        self.delta_max: float = 0.15      # Max 15% change per cycle
 
     def calculer_V_ON(self, agents: List['Agent'], entreprises: List['Entreprise']) -> float:
         """

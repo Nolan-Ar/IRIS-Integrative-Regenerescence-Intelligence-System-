@@ -3,8 +3,9 @@ IRIS Simulation - Agent Behaviors
 Implements economic decision-making for agents and enterprises
 """
 
-import random
 import math
+import random
+import uuid
 from typing import List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -106,7 +107,7 @@ def jouer_casino(
     agent: 'Agent',
     entreprise: 'Entreprise',
     budget_U: float,
-    kappa: float,
+    kappa: float,  # Garder le paramètre mais ne pas l'utiliser ici
     catalogue_biens: List['Bien'],
     eta_global: float = 1.0
 ) -> float:
@@ -114,48 +115,39 @@ def jouer_casino(
     Agent plays enterprise casino to acquire 1-3★ goods
 
     Process:
-    1. Agent pays U (entry fee)
-    2. Enterprise receives V (via simplified Stipulat conversion)
+    1. Agent pays U (entry fee) → U is burned
+    2. Enterprise receives V via thermodynamic creation: ΔV = η × E_t
+       where E_t = w_U × U_burn + w_S × S_burn
     3. Agent receives random good (1-3★) based on enterprise level
 
-    Args:
-        agent: Agent playing
-        entreprise: Enterprise casino
-        budget_U: U budget available
-        kappa: Current κ coefficient
-        catalogue_biens: Goods catalog
-
-    Returns:
-        Amount of U spent
+    IMPORTANT: κ does NOT intervene in V creation, only in V↔U distribution (RU)
     """
-    # Entry price is fixed based on enterprise level (in U)
-    # Price does NOT include kappa - kappa affects V generation separately
     prix_entree = entreprise.niveau * 10.0
 
     if agent.wallet_U < prix_entree:
         return 0
 
-    # Payment
+    # Payment: U is burned
     agent.wallet_U -= prix_entree
 
-    # Conversion U→V (simplified Stipulat)
-    # Formula: ΔV = (U_burn / κ) × efficiency × η_global × facteur_effort
-    # κ regulates liquidity: higher κ → more V created
-    # η_global modulates V creation based on global productivity
-    #
-    # ΔV now integrates an effort factor based on agent aptitudes
-    # This brings the simulation closer to the thermodynamic relation:
-    #   ΔV = η × f(U, S)
-    # where S (effort) is derived from aptitudes and U spending
-
-    # Effort factor based on agent aptitudes
-    # Higher 'croissance' and 'social_up' mean more efficient U→V conversion
-    # Adjusted from [0.5, 1.0] to [0.8, 1.2] to reduce penalty on V creation
+    # Calculate effort S based on agent aptitudes
+    # Higher 'croissance' and 'social_up' mean more entrepreneurial effort
     croissance = agent.aptitudes['croissance'] / 100.0
     social_up = agent.aptitudes['social_up'] / 100.0
-    facteur_effort = 0.8 + 0.4 * (croissance + social_up) / 2.0  # Range: [0.8, 1.2]
 
-    V_genere = (prix_entree / kappa) * 0.8 * eta_global * facteur_effort
+    # S effort proportional to U spent, modulated by aptitudes
+    # Range: [0.5, 1.0] of U spent
+    facteur_effort = 0.5 + 0.5 * (croissance + social_up) / 2.0
+    S_effort = prix_entree * facteur_effort
+
+    # Energy burned: E_t = w_U × U + w_S × S
+    w_U = 0.5  # 50% weight for monetary spending
+    w_S = 0.5  # 50% weight for effort
+    E_t = w_U * prix_entree + w_S * S_effort
+
+    # Thermodynamic creation: ΔV = η × E_t
+    # κ does NOT appear here (only in RU distribution)
+    V_genere = eta_global * E_t
 
     entreprise.wallet_V += V_genere
     entreprise.historique_participants += 1
@@ -186,7 +178,7 @@ def investir_nft_entreprise(
     agent: 'Agent',
     entreprise: 'Entreprise',
     montant_U: float,
-    kappa: float,
+    kappa: float,  # Garder mais ne pas utiliser
     cycle: int,
     eta_global: float = 1.0
 ) -> float:
@@ -194,48 +186,36 @@ def investir_nft_entreprise(
     Agent invests in enterprise via financial NFT
 
     Process:
-    1. Agent pays U
-    2. V is injected into enterprise
-    3. Agent receives NFT financier (future dividends - not implemented)
+    1. Agent pays U → burned
+    2. V is created via ΔV = η × E_t and injected into enterprise
+    3. Agent receives NFT financier (future dividends)
 
-    Args:
-        agent: Investor
-        entreprise: Target enterprise
-        montant_U: Amount to invest (in U)
-        kappa: Current κ coefficient
-        cycle: Current cycle
-
-    Returns:
-        Amount of U spent
+    κ does NOT intervene in V creation
     """
     if agent.wallet_U < montant_U:
         return 0
 
-    # Payment
+    # Payment: U burned
     agent.wallet_U -= montant_U
 
-    # Convert to V with η_global modulation and effort factor
-    # Formula: V = U / κ × η_global × facteur_effort
-    #
-    # ΔV now integrates an effort factor based on agent aptitudes
-    # This brings the simulation closer to the thermodynamic relation:
-    #   ΔV = η × f(U, S)
-    # Investment combines monetary capital (U) with entrepreneurial effort (S)
-
-    # Effort factor based on agent aptitudes
-    # Higher 'croissance' and 'social_up' mean more entrepreneurial capacity
-    # Adjusted from [0.5, 1.0] to [0.8, 1.2] to reduce penalty on V creation
+    # Calculate entrepreneurial effort S
     croissance = agent.aptitudes['croissance'] / 100.0
     social_up = agent.aptitudes['social_up'] / 100.0
-    facteur_effort = 0.8 + 0.4 * (croissance + social_up) / 2.0  # Range: [0.8, 1.2]
+    facteur_effort = 0.5 + 0.5 * (croissance + social_up) / 2.0
+    S_effort = montant_U * facteur_effort
 
-    V_injecte = (montant_U / kappa) * eta_global * facteur_effort
+    # Energy: E_t = w_U × U + w_S × S
+    w_U = 0.5
+    w_S = 0.5
+    E_t = w_U * montant_U + w_S * S_effort
+
+    # Thermodynamic creation: ΔV = η × E_t (no κ here!)
+    V_injecte = eta_global * E_t
 
     entreprise.wallet_V += V_injecte
 
     # Create NFT financier
     from .agent import NFTFinancier
-    import uuid
 
     nft = NFTFinancier(
         id=str(uuid.uuid4()),

@@ -15,47 +15,79 @@ class Universe:
     Manages Universal Income (RU) distribution
 
     RU is distributed monthly to all living agents
-    Amount is modulated by individual η
+    Formula: RU = (V_ON / N) × κ × facteur × (1 - stress) × R_t
+
+    With smoothing constraint: |RU_t - RU_{t-1}| ≤ α × RU_{t-1}
     """
 
     def __init__(self):
         self.facteur_redistribution = 0.05  # 5% of V_ON per cycle
+        self.alpha_lissage = 0.10  # Max 10% variation per cycle
+        self.RU_base_precedent = 0.0  # Memory of previous RU for smoothing
 
-    def calculate_RU_base(self, V_ON: float, population: int, D_total: float) -> float:
+    def calculate_RU_base(
+        self,
+        V_ON: float,
+        population: int,
+        D_total: float,
+        kappa: float,  # ✓ CRITICAL ADDITION
+        R_t: float = 1.0  # Activity flux (simplified to 1.0 for now)
+    ) -> float:
         """
         Calculate base Universal Income for the cycle
 
-        Formula (simplified):
-        RU_base = (V_ON / N) × facteur_redistribution × (1 - stress_thermique)
+        Formula (from protocol section 3.2.2):
+        RU_base = (V_ON / N) × facteur × κ × (1 - stress) × R_t
 
-        where stress_thermique = min(0.5, |D/V - 1|)
+        With smoothing (Proposition 3.14):
+        |RU_t - RU_{t-1}| ≤ α × RU_{t-1} where α = 0.1 (10%)
 
         Args:
             V_ON: Total active Verum
             population: Number of living agents
             D_total: Total debt
+            kappa: Liquidity regulator (CRITICAL: modulates V→U conversion)
+            R_t: Real activity flux (default 1.0)
 
         Returns:
-            Base RU amount per agent
+            Base RU amount per agent (smoothed)
         """
         if population == 0:
             return 0
 
-        # Calculate thermometric stress
+        # Calculate thermometric stress: stress = min(0.5, |D/V - 1|)
         if V_ON > 0:
             stress_thermique = min(0.5, abs((D_total / V_ON) - 1.0))
         else:
             stress_thermique = 0.5
 
-        # Base RU formula
-        RU_base = (
+        # Raw RU calculation WITH κ (CRITICAL)
+        # κ > 1 → facilitation → more U distributed
+        # κ < 1 → restriction → less U distributed
+        RU_brut = (
             (V_ON / population) *
             self.facteur_redistribution *
-            (1 - stress_thermique)
+            kappa *  # ✓ CRITICAL: κ modulates V→U conversion
+            (1 - stress_thermique) *
+            R_t
         )
 
+        # Apply smoothing constraint: max ±10% change
+        if self.RU_base_precedent > 0:
+            delta_max = self.alpha_lissage * self.RU_base_precedent
+            RU_lisse = max(
+                self.RU_base_precedent - delta_max,
+                min(self.RU_base_precedent + delta_max, RU_brut)
+            )
+        else:
+            # First cycle: no previous RU to smooth from
+            RU_lisse = RU_brut
+
+        # Store for next cycle
+        self.RU_base_precedent = RU_lisse
+
         # Ensure minimum vital RU
-        return max(10.0, RU_base)
+        return max(10.0, RU_lisse)
 
     def distribute_RU(
         self,
@@ -63,6 +95,7 @@ class Universe:
         cycle: int,
         V_ON: float,
         rad: 'RAD',
+        kappa: float,  # ✓ ADDED
         eta_global: float = 1.0
     ) -> float:
         """
@@ -70,39 +103,31 @@ class Universe:
 
         Each agent receives: RU_individual = RU_base × η_agent × η_global
 
-        This modulates RU based on both individual and global productivity
-
         Args:
             agents: List of all agents
             cycle: Current cycle number
             V_ON: Total active Verum
             rad: RAD instance for debt calculation
+            kappa: Liquidity regulator (CRITICAL)
             eta_global: Global productivity coefficient from Exchange
 
         Returns:
             Total RU distributed
         """
-        # Count living agents
         living_agents = [a for a in agents if a.alive]
         population = len(living_agents)
 
         if population == 0:
             return 0
 
-        # Calculate base RU
+        # Calculate base RU WITH κ
         D_total = rad.get_total()
-        RU_base = self.calculate_RU_base(V_ON, population, D_total)
+        RU_base = self.calculate_RU_base(V_ON, population, D_total, kappa)
 
         # Distribute to each living agent
         total_distribue = 0
         for agent in living_agents:
             # Individual RU modulated by η_agent AND η_global
-            # RU represents available "power" that agents can spend or invest
-            #
-            # TODO: Link RU distribution to S (effort) dynamics
-            # RU could represent both monetary power (U) and effort capacity (S)
-            # For now, we only distribute U; S is not explicitly consumed/regenerated
-            # but is calculated based on agent aptitudes and U spending
             RU_agent = RU_base * agent.eta * eta_global
             agent.wallet_U += RU_agent
             total_distribue += RU_agent
@@ -110,16 +135,7 @@ class Universe:
         return total_distribue
 
     def calculate_RU_statistics(self, agents: List['Agent'], RU_base: float) -> dict:
-        """
-        Calculate RU distribution statistics
-
-        Args:
-            agents: List of agents
-            RU_base: Base RU amount
-
-        Returns:
-            Dictionary with statistics
-        """
+        """Calculate RU distribution statistics"""
         living = [a for a in agents if a.alive]
 
         if not living:

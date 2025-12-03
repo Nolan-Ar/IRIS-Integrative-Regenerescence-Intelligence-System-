@@ -146,14 +146,14 @@ class Simulation:
             r_ic, nu_eff, tau_eng, r_thermo
         )
 
-        # 3. Distribute Universal Income
+        # 3. Distribute Universal Income WITH κ
         RU_total = self.universe.distribute_RU(
-            self.agents, cycle_num, V_ON, self.rad, eta_global
+            self.agents, cycle_num, V_ON, self.rad, kappa, eta_global
         )
 
         # 4. Agent actions
         U_burn_total = 0.0
-        U_stake_flow = 0.0
+        U_stake_nouveaux = 0.0  # ✓ Only NEW staking contracts
         S_burn_total = 0.0
         for agent in self.agents:
             if agent.alive:
@@ -163,7 +163,7 @@ class Simulation:
                     self.catalogue_biens, self.rad, eta_global
                 )
                 U_burn_total += spending['total']
-                U_stake_flow += spending['staking']
+                U_stake_nouveaux += spending['staking']  # ✓ NEW contracts only
 
                 # Effort S explicite pour cet agent
                 S_burn_total += self._calculer_effort_S_agent(agent, spending)
@@ -180,8 +180,9 @@ class Simulation:
                 V_burned_total += V_burn
 
         # 6. Finalize staking contracts (collect monthly payments)
+        # Note: These are NOT counted in τ_eng (only new engagements count)
         _, U_staking_payments = self.chambre_memorielle.finaliser_contrats(cycle_num, self.rad)
-        U_stake_flow += U_staking_payments
+        # Do NOT add to U_stake_nouveaux (τ_eng only counts NEW commitments)
 
         # 7. Burn unused U (perishability)
         for agent in self.agents:
@@ -222,7 +223,7 @@ class Simulation:
             'U_burn_total': U_burn_total,
             'S_burn_total': S_burn_total,  # Explicit effort calculation
             'RU_total': RU_total,
-            'U_stake_flow': U_stake_flow
+            'U_stake_flow': U_stake_nouveaux  # ✓ Only NEW engagements
         }
 
     def _gerer_demographie(self, cycle: int) -> tuple[int, int]:
