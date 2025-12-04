@@ -133,7 +133,7 @@ class Simulation:
             if not hasattr(self, 'V_ON_initial'):
                 self.V_ON_initial = V_ON
 
-            from .core.bien import recalibrer_catalogue
+            from core.bien import recalibrer_catalogue
             recalibrer_catalogue(
                 self.catalogue_biens,
                 V_ON,
