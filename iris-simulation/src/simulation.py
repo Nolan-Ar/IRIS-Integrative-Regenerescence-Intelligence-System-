@@ -127,6 +127,19 @@ class Simulation:
         # 1. Calculate V_ON
         V_ON = self.exchange.calculer_V_ON(self.agents, self.entreprises)
 
+        # 1a. ✓ CORRECTION 4: Recalibrate goods catalog every year
+        if cycle_num % 12 == 0 and cycle_num > 0:
+            # Store initial V_ON for reference (first time only)
+            if not hasattr(self, 'V_ON_initial'):
+                self.V_ON_initial = V_ON
+
+            from core.bien import recalibrer_catalogue
+            recalibrer_catalogue(
+                self.catalogue_biens,
+                V_ON,
+                self.V_ON_initial
+            )
+
         # 1b. Automatic debt stabilizer when D/V > 1.5
         # Reinforces amortization to prevent debt explosion
         r = self.rad.get_ratio(V_ON)
@@ -192,7 +205,15 @@ class Simulation:
         # 8. Demographics
         deaths, births = self._gerer_demographie(cycle_num)
 
-        # 9. Apply RAD monthly amortization
+        # 9. ✓ CORRECTION 3: Redistribution from Chambre de Relance
+        # Redistribute recycled goods to poor agents, reducing D_regulateur
+        V_redistribue = self.chambre_relance.redistribuer_biens(
+            self.agents,
+            self.rad,
+            max_per_cycle=10  # Redistribute 10 goods per cycle
+        )
+
+        # 10. Apply RAD monthly amortization
         self.rad.apply_monthly_amortization()
 
         # 10. Collect metrics
@@ -243,25 +264,37 @@ class Simulation:
                 agent.alive = False
                 deces.append(agent)
 
+                # ✓ CORRECTION 1: Track recycled value to avoid double counting
+                biens_recycles_V = 0.0
+
                 # Recycle patrimony
                 for bien in agent.biens:
                     if bien.etoiles >= 4:
+                        # High-value goods → Chambre Mémorielle
                         self.chambre_memorielle.ajouter_bien(bien)
                     else:
+                        # Low-value goods → Chambre de Relance
                         self.chambre_relance.recycler_bien(bien, self.rad)
+                        biens_recycles_V += bien.valeur_V  # ✓ Track recycled value
 
-                # Add net patrimony to RAD as regulator debt
-                # Net = V - D (to avoid double counting existing debt)
-                patrimoine_V = agent.wallet_V + sum(
-                    b.valeur_V for b in agent.biens
+                # Calculate net patrimony EXCLUDING already recycled goods
+                # Only count: wallet V + high-value goods (4-5★) - debt
+                patrimoine_V_wallet = agent.wallet_V
+                patrimoine_V_haute_valeur = sum(
+                    b.valeur_V for b in agent.biens if b.etoiles >= 4
                 )
-                # Calculate agent's outstanding debt (from staking contracts)
                 dette_agent = sum(
                     c.montant_total for c in agent.contrats_staking
                 )
-                patrimoine_net = patrimoine_V - dette_agent
 
-                # Only add positive net patrimony (V > D)
+                patrimoine_net = (
+                    patrimoine_V_wallet +
+                    patrimoine_V_haute_valeur -
+                    dette_agent
+                )
+
+                # Only add positive net patrimony
+                # Low-value goods (1-3★) were already counted in recycler_bien()
                 if patrimoine_net > 0:
                     self.rad.add_debt(patrimoine_net, secteur='regulateur')
 
