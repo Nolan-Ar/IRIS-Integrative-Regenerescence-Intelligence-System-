@@ -125,10 +125,17 @@ class Exchange:
         """
         Calculate κ (liquidity regulator) based on thermometric ratio
 
-        Formula (Layer 1 simplified):
-        κ = κ_base × (1 + α × Δr)
+        ✓ CORRECTION 6: Fixed inverted sign for proper counter-cyclical regulation
+
+        Formula (Layer 1 corrected):
+        κ = κ_base × (1 - α × Δr)
+                         ↑ MINUS sign for counter-cyclical behavior
 
         where Δr = r - 1 (deviation from equilibrium)
+
+        Behavior:
+        - D/V > 1 (over-debt) → κ < 1 → RU decreases → COOLING ✓
+        - D/V < 1 (under-debt) → κ > 1 → RU increases → HEATING ✓
 
         κ > 1.0: Facilitation (stimulates demand)
         κ = 1.0: Neutrality
@@ -150,8 +157,10 @@ class Exchange:
         r = rad.get_ratio(V_ON)
         Delta_r = r - 1.0  # Deviation from equilibrium
 
-        # Formula: κ = κ_base × (1 + α × Δr)
-        kappa = kappa_base * (1 + alpha_kappa_thermo * Delta_r)
+        # ✓ CORRECTED: MINUS sign for counter-cyclical regulation
+        # D/V > 1 → Δr > 0 → κ < 1 → cooling (reduce RU)
+        # D/V < 1 → Δr < 0 → κ > 1 → heating (increase RU)
+        kappa = kappa_base * (1 - alpha_kappa_thermo * Delta_r)
 
         # Bound to [0.5, 2.0]
         return max(self.kappa_min, min(self.kappa_max, kappa))
