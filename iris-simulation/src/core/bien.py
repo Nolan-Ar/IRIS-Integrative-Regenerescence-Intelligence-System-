@@ -131,3 +131,32 @@ def creer_bien_aleatoire(etoiles: int, catalogue: list[Bien]) -> Bien:
         type=template.type,
         actif=True
     )
+
+
+def recalibrer_catalogue(catalogue: list[Bien], V_ON: float, V_initial: float) -> None:
+    """
+    ✓ CORRECTION 4: Recalibrate goods catalog based on current V_ON
+
+    Formula: new_value = initial_value × (V_ON / V_initial)
+
+    This ensures goods values scale with economy size
+
+    Args:
+        catalogue: Goods catalog to recalibrate
+        V_ON: Current total active Verum
+        V_initial: Initial V_ON at system start
+    """
+    if V_initial <= 0 or V_ON <= 0:
+        return
+
+    # Calculate scaling factor
+    facteur_echelle = V_ON / V_initial
+
+    # Recalibrate each good
+    for bien in catalogue:
+        # Store initial value if not already stored
+        if not hasattr(bien, 'valeur_initiale'):
+            bien.valeur_initiale = bien.valeur_V
+
+        # Scale value proportionally to V_ON
+        bien.valeur_V = bien.valeur_initiale * facteur_echelle

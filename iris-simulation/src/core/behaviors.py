@@ -129,24 +129,34 @@ def jouer_casino(
 
     # Payment: U is burned
     agent.wallet_U -= prix_entree
+    U_burn = prix_entree
 
-    # Calculate effort S based on agent aptitudes
-    # Higher 'croissance' and 'social_up' mean more entrepreneurial effort
-    croissance = agent.aptitudes['croissance'] / 100.0
-    social_up = agent.aptitudes['social_up'] / 100.0
+    # ✓ CORRECTION 2: Calculate INTRINSIC S (independent of U)
+    # S represents the enterprise's inherent productive effort
+    # Formula: S = base_effort × niveau_factor × owner_productivity
 
-    # S effort proportional to U spent, modulated by aptitudes
-    # Range: [0.5, 1.0] of U spent
-    facteur_effort = 0.5 + 0.5 * (croissance + social_up) / 2.0
-    S_effort = prix_entree * facteur_effort
+    base_effort_per_play = 15.0  # Fixed base effort (independent of U)
 
-    # Energy burned: E_t = w_U × U + w_S × S
-    w_U = 0.5  # 50% weight for monetary spending
-    w_S = 0.5  # 50% weight for effort
-    E_t = w_U * prix_entree + w_S * S_effort
+    # Enterprise level factor: higher level = more sophisticated production
+    niveau_factor = 0.5 + (entreprise.niveau / 10.0)  # [0.5, 1.0]
+
+    # Owner productivity: croissance + confiance affect production efficiency
+    owner = entreprise.owner
+    owner_productivity = (
+        (owner.aptitudes['croissance'] / 100.0) * 0.6 +
+        (owner.aptitudes['confiance'] / 100.0) * 0.4
+    )  # [0, 1]
+    owner_factor = 0.7 + 0.6 * owner_productivity  # [0.7, 1.3]
+
+    # Total S burn (intrinsic effort, NOT proportional to U)
+    S_burn = base_effort_per_play * niveau_factor * owner_factor
+
+    # Energy: E_t = w_U × U + w_S × S
+    w_U = 0.5
+    w_S = 0.5
+    E_t = w_U * U_burn + w_S * S_burn
 
     # Thermodynamic creation: ΔV = η × E_t
-    # κ does NOT appear here (only in RU distribution)
     V_genere = eta_global * E_t
 
     entreprise.wallet_V += V_genere
@@ -197,19 +207,28 @@ def investir_nft_entreprise(
 
     # Payment: U burned
     agent.wallet_U -= montant_U
+    U_burn = montant_U
 
-    # Calculate entrepreneurial effort S
-    croissance = agent.aptitudes['croissance'] / 100.0
-    social_up = agent.aptitudes['social_up'] / 100.0
-    facteur_effort = 0.5 + 0.5 * (croissance + social_up) / 2.0
-    S_effort = montant_U * facteur_effort
+    # ✓ CORRECTION 2: Intrinsic entrepreneurial effort S (independent of U)
+    base_effort_investment = 20.0  # Higher than casino (investment is more complex)
+
+    niveau_factor = 0.5 + (entreprise.niveau / 10.0)
+
+    owner = entreprise.owner
+    owner_productivity = (
+        (owner.aptitudes['croissance'] / 100.0) * 0.7 +  # Croissance more important for investment
+        (owner.aptitudes['confiance'] / 100.0) * 0.3
+    )
+    owner_factor = 0.7 + 0.6 * owner_productivity
+
+    S_burn = base_effort_investment * niveau_factor * owner_factor
 
     # Energy: E_t = w_U × U + w_S × S
     w_U = 0.5
     w_S = 0.5
-    E_t = w_U * montant_U + w_S * S_effort
+    E_t = w_U * U_burn + w_S * S_burn
 
-    # Thermodynamic creation: ΔV = η × E_t (no κ here!)
+    # Creation: ΔV = η × E_t
     V_injecte = eta_global * E_t
 
     entreprise.wallet_V += V_injecte
